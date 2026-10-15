@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>MisMonedas | BCV, Paralelo, TRM, Euro y Oro en Tiempo Real</title>
+    <meta name="description" content="MisMonedas: tasas del BCV, dólar paralelo, euro y TRM de Colombia, conversor Bs ↔ COP, determinador de tasa real, calculadora de oro, tendencias y noticias.">
+    <meta name="keywords" content="dolar bcv, dolar paralelo, trm colombia, conversor bolivares pesos, calculadora de oro, tasas de cambio venezuela">
+    <meta name="author" content="Jairo Cárdenas">
+    <meta name="robots" content="index, follow">
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#eef3fa">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MisMonedas">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32.png">
+    <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+
+    <!-- Redes sociales (og:url, og:image y canonical se agregan cuando exista el dominio definitivo) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="MisMonedas">
+    <meta property="og:title" content="MisMonedas | Tasas de cambio en tiempo real">
+    <meta property="og:description" content="BCV, Paralelo, Euro, TRM, conversores, calculadora de oro y tendencias.">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="MisMonedas | Tasas de cambio en tiempo real">
+    <meta name="twitter:description" content="BCV, Paralelo, Euro, TRM, conversores, calculadora de oro y tendencias.">
+
+    <!-- Aplica el tema antes del primer render (evita parpadeo) -->
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('app-theme');
+                if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {}
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js: script clásico (no module) para exponer el global Chart; defer = no bloquea el render -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-news.css">
+</head>
+<body>
+    <a class="skip-link" href="#main">Saltar al contenido</a>
+
+    <div class="app-shell">
+
+        <!-- TOP APP BAR -->
+        <header class="top-app-bar">
+            <button class="icon-btn" id="menuBtn" aria-label="Abrir menú" aria-controls="drawer" aria-expanded="false">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <h1 class="app-title"><button type="button" class="title-btn" data-screen="home">mismonedas</button></h1>
+            <div class="top-actions">
+                <button class="icon-btn" id="refreshAllBtn" aria-label="Actualizar todas las tasas">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+                <button class="icon-btn" id="theme-toggle" aria-label="Cambiar entre modo claro y oscuro">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- DRAWER -->
+        <div class="scrim" id="scrim"></div>
+        <aside class="drawer" id="drawer" aria-label="Menú principal">
+            <div class="drawer-header">
+                <i class="fa-solid fa-coins"></i>
+                <span>mismonedas</span>
+            </div>
+
+            <p class="drawer-section">Herramientas</p>
+            <button class="drawer-item" data-screen="home"><i class="fa-solid fa-house"></i><span>Inicio</span></button>
+            <button class="drawer-item" data-screen="calculadora" data-conv-tab="oficial"><i class="fa-solid fa-calculator"></i><span>Conversor oficial</span></button>
+            <button class="drawer-item" data-screen="calculadora" data-conv-tab="paralelo"><i class="fa-solid fa-right-left"></i><span>Conversor Paralelo</span></button>
+            <button class="drawer-item" data-screen="calculadora" data-conv-tab="determinador"><i class="fa-solid fa-scale-balanced"></i><span>Determinador real</span></button>
+            <button class="drawer-item" data-screen="oro"><i class="fa-solid fa-coins"></i><span>Calculadora de Oro</span></button>
+            <button class="drawer-item" data-screen="tendencias"><i class="fa-solid fa-chart-line"></i><span>Tendencias</span></button>
+            <button class="drawer-item" data-screen="noticias"><i class="fa-solid fa-newspaper"></i><span>Noticias</span></button>
+
+            <p class="drawer-section">Acciones</p>
+            <button class="drawer-item" id="menuHistory"><i class="fa-solid fa-clock-rotate-left"></i><span>Historial de conversiones</span></button>
+            <button class="drawer-item" id="menuRefresh"><i class="fa-solid fa-rotate"></i><span>Actualizar todas las tasas</span></button>
+            <button class="drawer-item" id="menuShare"><i class="fa-solid fa-share-nodes"></i><span>Compartir app</span></button>
+
+            <p class="drawer-section">Configuración</p>
+            <button class="drawer-item" id="menuTheme"><i class="fa-solid fa-moon"></i><span id="menuThemeLabel">Cambiar a modo oscuro</span></button>
+            <button class="drawer-item" id="menuClearCache"><i class="fa-solid fa-broom"></i><span>Limpiar caché</span></button>
+            <button class="drawer-item" id="menuAbout"><i class="fa-solid fa-circle-info"></i><span>Acerca de</span></button>
+
+            <p class="drawer-version">v4.2.0</p>
+        </aside>
+
+        <main class="screens" id="main">
+
+            <!-- ============ HOME ============ -->
+            <section class="screen active" id="screen-home" aria-label="Inicio">
+
+                <div class="info-bar">
+                    <div class="info-block">
+                        <div class="day-name" id="day-name">--</div>
+                        <div class="date-text" id="date">--</div>
+                    </div>
+                    <div class="clock" id="time">--:--:--</div>
+                    <div class="info-block info-right">
+                        <div class="weather-temp"><i id="day-icon" class="fa-solid fa-sun" aria-hidden="true"></i> <span id="weather-temp">--°C</span><span class="sr-only" id="day-status"></span></div>
+                        <div class="weather-desc" id="weather-desc">Cargando...</div>
+                    </div>
+                </div>
+
+                <!-- TARJETA ÚNICA: TASAS + FACTORES -->
+                <div class="card rates-card">
+
+                    <div class="rate-row">
+                        <div class="rate-info">
+                            <span class="rate-label">BCV(USD)</span>
+                            <span class="stat-variation stable" id="bcv-variation-container">--</span>
+                        </div>
+                        <div class="rate-side">
+                            <span class="rate-value" id="bcv-value">--</span>
+                            <span class="rate-tools">
+                                <a class="tool-btn" href="https://www.bcv.org.ve/" target="_blank" rel="noopener noreferrer" aria-label="Sitio oficial del BCV"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                <button class="tool-btn" data-refresh="bcv" aria-label="Actualizar dólar BCV"><i class="fa-solid fa-rotate"></i></button>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="rate-row">
+                        <div class="rate-info">
+                            <span class="rate-label">EURO(BCV)</span>
+                            <span class="stat-variation stable" id="euro-variation-container">--</span>
+                        </div>
+                        <div class="rate-side">
+                            <span class="rate-value" id="euro-value">--</span>
+                            <span class="rate-tools">
+                                <a class="tool-btn" href="https://www.bcv.org.ve/" target="_blank" rel="noopener noreferrer" aria-label="Sitio oficial del BCV (euro)"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                <button class="tool-btn" data-refresh="euro" aria-label="Actualizar euro BCV"><i class="fa-solid fa-rotate"></i></button>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="rate-row">
+                        <div class="rate-info">
+                            <span class="rate-label">Paralelo</span>
+                            <span class="stat-variation stable" id="paralelo-variation-container">--</span>
+                        </div>
+                        <div class="rate-side">
+                            <span class="rate-value" id="paralelo-value">--</span>
+                            <span class="rate-tools">
+                                <button class="tool-btn" data-refresh="paralelo" aria-label="Actualizar dólar paralelo"><i class="fa-solid fa-rotate"></i></button>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="rate-row">
+                        <div class="rate-info">
+                            <span class="rate-label">TRM(Colombia)</span>
+                            <span class="stat-variation stable" id="trm-variation-container">--</span>
+                        </div>
+                        <div class="rate-side">
+                            <span class="rate-value" id="trm-value">--</span>
+                            <span class="rate-tools">
+                                <a class="tool-btn" href="https://www.exchangerate-api.com/" target="_blank" rel="noopener noreferrer" aria-label="Fuente de la TRM"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                <button class="tool-btn" data-refresh="trm" aria-label="Actualizar TRM"><i class="fa-solid fa-rotate"></i></button>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- FACTORES DESPLEGABLES -->
+                    <button class="factors-toggle" id="factorsToggle" aria-expanded="false" aria-controls="factorsBody">
+                        <span><i class="fa-solid fa-scale-balanced"></i> Factores de Conversión</span>
+                        <i class="fa-solid fa-chevron-down chevron"></i>
+                    </button>
+                    <div class="factors-body" id="factorsBody">
+                        <div class="factor-row"><span class="factor-label">TRM/PARALELO</span><span class="factor-value" id="factor-paralelo">--</span></div>
+                        <div class="factor-row"><span class="factor-label">TRM/OFICIAL</span><span class="factor-value" id="factor-oficial">--</span></div>
+                        <div class="factor-row"><span class="factor-label">TRM/EURO</span><span class="factor-value" id="factor-euro">--</span></div>
+                    </div>
+                </div>
+
+                <p class="last-update" id="last-update" aria-live="polite">Actualizando tasas…</p>
+
+                <div class="insight-card neutral" id="home-insight">
+                    <i class="fa-solid fa-scale-balanced" id="home-insight-icon" aria-hidden="true"></i>
+                    <div>
+                        <div class="insight-title">Insight del día</div>
+                        <p id="home-insight-text">Calculando brecha cambiaria…</p>
+                    </div>
+                </div>
+                <div class="tip-card">
+                    <i class="fa-regular fa-lightbulb" aria-hidden="true"></i>
+                    <p id="home-tip-text">Tip del día</p>
+                </div>
+            </section>
+
+            <!-- ============ CONVERSOR (3 pestañas internas) ============ -->
+            <section class="screen" id="screen-calculadora" aria-label="Conversor">
+                <div class="card screen-card">
+                    <h2 class="screen-title"><i class="fa-solid fa-calculator"></i> Conversor</h2>
+
+                    <div class="segmented" role="tablist" aria-label="Tipo de conversor">
+                        <button class="seg-btn active" role="tab" id="tab-oficial" data-conv-tab="oficial" aria-selected="true" aria-controls="conv-panel-oficial">Oficial</button>
+                        <button class="seg-btn" role="tab" id="tab-paralelo" data-conv-tab="paralelo" aria-selected="false" aria-controls="conv-panel-paralelo" tabindex="-1">Paralelo</button>
+                        <button class="seg-btn" role="tab" id="tab-determinador" data-conv-tab="determinador" aria-selected="false" aria-controls="conv-panel-determinador" tabindex="-1">Determinador</button>
+                    </div>
+
+                    <!-- Oficial -->
+                    <div class="conv-panel" id="conv-panel-oficial" role="tabpanel" aria-labelledby="tab-oficial">
+                        <div class="conv-field">
+                            <label for="conv-amount">Monto</label>
+                            <div class="conv-row">
+                                <input type="number" id="conv-amount" inputmode="decimal" placeholder="0.00" value="100" min="0" step="any">
+                                <select id="conv-from" aria-label="Moneda de origen"></select>
+                            </div>
+                        </div>
+                        <button class="swap-btn" id="conv-swap" aria-label="Invertir monedas"><i class="fa-solid fa-arrow-down"></i></button>
+                        <div class="conv-field">
+                            <label for="conv-result">Equivalente</label>
+                            <div class="conv-row">
+                                <input type="number" id="conv-result" placeholder="0.00" readonly>
+                                <select id="conv-to" aria-label="Moneda de destino"></select>
+                            </div>
+                        </div>
+                        <button class="btn-primary" id="conv-calculate"><i class="fa-solid fa-calculator"></i> Calcular</button>
+
+                        <div class="recent">
+                            <div class="recent-head">
+                                <h3>Historial reciente</h3>
+                                <button class="text-btn" id="openHistoryBtn">Ver todo</button>
+                            </div>
+                            <ul class="history-list" id="history-list"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Paralelo Bs <-> COP -->
+                    <div class="conv-panel" id="conv-panel-paralelo" role="tabpanel" aria-labelledby="tab-paralelo" hidden>
+                        <p class="screen-subtitle">Usa el factor TRM/Paralelo: <strong id="par-factor">--</strong></p>
+                        <label for="input-bolivares">Bolívares (VES)</label>
+                        <input type="number" id="input-bolivares" class="field-input" inputmode="decimal" placeholder="0.00" min="0" step="any">
+                        <div class="result-card">
+                            <span class="result-label">Recibes o pagas:</span>
+                            <span class="result-value" id="resultado-cop">$ 0,00</span>
+                            <span class="result-currency">COP</span>
+                        </div>
+
+                        <label for="input-pesos">Pesos (COP)</label>
+                        <input type="number" id="input-pesos" class="field-input" inputmode="decimal" placeholder="0.00" min="0" step="any">
+                        <div class="result-card">
+                            <span class="result-label">Recibes:</span>
+                            <span class="result-value" id="resultado-bs">Bs. 0,00</span>
+                            <span class="result-currency">VES</span>
+                        </div>
+                    </div>
+
+                    <!-- Determinador -->
+                    <div class="conv-panel" id="conv-panel-determinador" role="tabpanel" aria-labelledby="tab-determinador" hidden>
+                        <p class="screen-subtitle">Descubre a cuánto te están cobrando realmente el dólar en una transacción cruzada COP/VES.</p>
+                        <label for="det-cop">Cantidad en Pesos Colombianos (COP)</label>
+                        <input type="number" id="det-cop" class="field-input" inputmode="decimal" placeholder="Ej: 100000" min="0" step="any">
+                        <label for="det-factor">Factor de conversión que te aplican (COP/VES)</label>
+                        <input type="number" id="det-factor" class="field-input" inputmode="decimal" placeholder="Ej: 3.533" min="0.0001" step="0.0001">
+                        <small class="hint">Ejemplo: si te dan 28.303 VES por 100.000 COP, el factor es 3.533.</small>
+                        <button class="btn-primary" id="det-calculate"><i class="fa-solid fa-calculator"></i> Calcular tasa implícita</button>
+
+                        <div class="det-results" id="det-results" hidden>
+                            <div class="result-card">
+                                <span class="result-label">Recibirás o pagarás aproximadamente:</span>
+                                <span class="result-value" id="res-bolivares">Bs. 0,00</span>
+                            </div>
+                            <div class="result-card">
+                                <span class="result-label">Tasa implícita del dólar en esta operación:</span>
+                                <span class="result-value" id="res-implicit-rate">0.00 VES/USD</span>
+                            </div>
+                            <div class="comparison-grid">
+                                <div class="comparison-card">
+                                    <div class="comp-title">Vs. Dólar BCV (oficial)</div>
+                                    <div class="comp-value" id="comp-bcv-value">--</div>
+                                    <div class="comp-badge" id="comp-bcv-badge">--</div>
+                                </div>
+                                <div class="comparison-card">
+                                    <div class="comp-title">Vs. Dólar Paralelo</div>
+                                    <div class="comp-value" id="comp-paralelo-value">--</div>
+                                    <div class="comp-badge" id="comp-paralelo-badge">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ CALCULADORA DE ORO ============ -->
+            <section class="screen" id="screen-oro" aria-label="Calculadora de oro">
+                <div class="card screen-card">
+                    <h2 class="screen-title"><i class="fa-solid fa-coins"></i> Calculadora de Oro</h2>
+
+                    <div class="gold-price-display">
+                        <span class="gold-label">Precio internacional del oro (24k) · onza troy</span>
+                        <span class="gold-value" id="gold-price">Cargando...</span>
+                        <span class="gold-variation" id="gold-variation"></span>
+                        <small class="gold-time" id="gold-time"></small>
+                    </div>
+
+                    <p class="screen-subtitle">Sigue estos 3 pasos para una estimación realista. La onza troy (31,1035 g) es el estándar mundial y su precio base se calcula sobre oro puro (24k).</p>
+
+                    <div class="step">
+                        <div class="step-num">1</div>
+                        <div class="step-body">
+                            <label class="step-title" for="gold-grams">¿Cuánto oro quieres adquirir o vender?</label>
+                            <div class="conv-row">
+                                <input type="number" id="gold-grams" inputmode="decimal" placeholder="Ej: 5" value="5" min="0" step="any">
+                                <select id="gold-unit" aria-label="Unidad">
+                                    <option value="g">Gramos (g)</option>
+                                    <option value="oz">Onzas troy (oz)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-num">2</div>
+                        <fieldset class="step-body" id="gold-purity">
+                            <legend class="step-title">Escoge la pureza (kilates) de la pieza</legend>
+                            <div class="choice-grid">
+                                <label class="choice"><input type="radio" name="gold-purity" value="24"><span class="choice-body"><b>24k</b><small>99.9% oro · Lingotes y monedas de inversión</small></span></label>
+                                <label class="choice"><input type="radio" name="gold-purity" value="22"><span class="choice-body"><b>22k</b><small>91.6% oro · Joyería de alta ley</small></span></label>
+                                <label class="choice"><input type="radio" name="gold-purity" value="18" checked><span class="choice-body"><b>18k</b><small>75.0% oro · Joyería fina y anillos</small></span></label>
+                                <label class="choice"><input type="radio" name="gold-purity" value="14"><span class="choice-body"><b>14k</b><small>58.3% oro · Joyería común resistente</small></span></label>
+                                <label class="choice"><input type="radio" name="gold-purity" value="10"><span class="choice-body"><b>10k</b><small>41.7% oro · Mínimo legal para ser "oro"</small></span></label>
+                            </div>
+                            <p class="hint" id="purity-hint">El 75% del peso es oro puro y el 25% restante son otros metales.</p>
+                        </fieldset>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-num">3</div>
+                        <fieldset class="step-body">
+                            <legend class="step-title">¿Cuál es tu objetivo con esta pieza?</legend>
+                            <div class="choice-grid">
+                                <label class="choice"><input type="radio" name="gold-operation" value="venta" checked><span class="choice-body"><b><i class="fa-solid fa-hand-holding-dollar"></i> Vender</b><small>La casa de compra retiene un margen por refinación y ganancia</small></span></label>
+                                <label class="choice"><input type="radio" name="gold-operation" value="compra"><span class="choice-body"><b><i class="fa-solid fa-bag-shopping"></i> Comprar</b><small>La joyería agrega un margen por diseño, fabricación y venta</small></span></label>
+                            </div>
+                        </fieldset>
+                    </div>
+
+                    <div class="gold-result" id="gold-result" aria-live="polite">
+                        <span class="result-label" id="gold-narrative">Ingresa una cantidad para estimar el valor.</span>
+                        <span class="result-value">$0.00</span>
+                    </div>
+
+                    <div class="breakdown" id="gold-breakdown" hidden>
+                        <div class="breakdown-row"><span>Valor base del oro puro (por gramo):</span><b id="break-base">$0.00</b></div>
+                        <div class="breakdown-row"><span>Valor ajustado por pureza (<span id="break-purity-pct">75%</span>):</span><b id="break-adjusted">$0.00</b></div>
+                        <div class="breakdown-row highlight"><span id="break-margin-label">Precio por gramo tras margen:</span><b id="break-final">$0.00</b></div>
+                    </div>
+
+                    <details class="edu">
+                        <summary><i class="fa-solid fa-graduation-cap"></i> Conoce más sobre el oro</summary>
+                        <div class="edu-tip"><i class="fa-solid fa-ring"></i><div><b>¿Qué significan los kilates (K)?</b><p>Indican la pureza. 24K es oro puro (99.9%) pero muy blando; por eso la joyería usa 18K (75%) o 14K (58.3%), mezclado con otros metales para darle resistencia.</p></div></div>
+                        <div class="edu-tip"><i class="fa-solid fa-weight-hanging"></i><div><b>Onza troy vs. onza normal</b><p>El mercado de metales usa la onza troy (31,1035 g), más pesada que la onza común de cocina (28,35 g).</p></div></div>
+                        <div class="edu-tip"><i class="fa-solid fa-scale-balanced"></i><div><b>¿Por qué cambia el precio al comprar o vender?</b><p>Existe un spread o margen. Al vender, las casas de compra retienen un % por costos de refinación. Al comprar, las joyerías agregan un % por diseño y fabricación.</p></div></div>
+                        <p class="edu-links-title">Fuentes confiables para ampliar tu conocimiento:</p>
+                        <div class="chip-row">
+                            <a class="chip-link" href="https://www.gold.org/" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-globe"></i> Consejo Mundial del Oro</a>
+                            <a class="chip-link" href="https://www.tradingview.com/symbols/XAUUSD/" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-chart-line"></i> Precio en tiempo real</a>
+                        </div>
+                    </details>
+                </div>
+            </section>
+
+            <!-- ============ TENDENCIAS ============ -->
+            <section class="screen" id="screen-tendencias" aria-label="Tendencias">
+                <div class="card screen-card">
+                    <h2 class="screen-title"><i class="fa-solid fa-chart-line"></i> Tendencias</h2>
+                    <p class="screen-subtitle">Evolución de la tasa con datos reales</p>
+
+                    <div class="chip-row" id="trend-currency" role="group" aria-label="Moneda">
+                        <button class="stats-tab active" data-currency="bcv" aria-pressed="true">BCV</button>
+                        <button class="stats-tab" data-currency="euro" aria-pressed="false">Euro</button>
+                        <button class="stats-tab" data-currency="paralelo" aria-pressed="false">Paralelo</button>
+                        <button class="stats-tab" data-currency="trm" aria-pressed="false">TRM</button>
+                    </div>
+                    <div class="chip-row" id="trend-range" role="group" aria-label="Periodo">
+                        <button class="btn-tab active" data-days="7" aria-pressed="true">7D</button>
+                        <button class="btn-tab" data-days="30" aria-pressed="false">30D</button>
+                        <button class="btn-tab" data-days="365" aria-pressed="false">Año</button>
+                    </div>
+
+                    <div class="stats-summary">
+                        <div class="summary-item"><span class="summary-label">Valor actual</span><span class="summary-value" id="stat-current-value">--</span></div>
+                        <div class="summary-item"><span class="summary-label" id="stat-variation-label">Variación (7 días)</span><span class="summary-value" id="stat-variation">--</span></div>
+                    </div>
+
+                    <div class="chart-container"><canvas id="ratesChart" role="img" aria-label="Gráfico de evolución de la tasa seleccionada"></canvas></div>
+                    <p class="empty-note" id="trend-empty" hidden></p>
+                    <p class="source-note" id="stat-source"></p>
+                </div>
+            </section>
+
+            <!-- ============ NOTICIAS ============ -->
+            <section class="screen" id="screen-noticias" aria-label="Noticias">
+                <div class="card screen-card">
+                    <h2 class="screen-title"><i class="fa-solid fa-newspaper"></i> Últimas Noticias</h2>
+                    <p class="screen-subtitle">Información al instante: Cripto, Regional y Finanzas.</p>
+                    <div class="chip-row" role="group" aria-label="Filtrar noticias">
+                        <button class="filter-btn active" data-filter="all" aria-pressed="true">Todas</button>
+                        <button class="filter-btn" data-filter="Cripto" aria-pressed="false">Cripto</button>
+                        <button class="filter-btn" data-filter="Regional" aria-pressed="false">Regional</button>
+                        <button class="chip-btn" id="refresh-news" aria-label="Actualizar noticias"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+                    <div class="news-grid" id="news-container" aria-live="polite"></div>
+
+                    <section class="ad-section" aria-label="Publicidad de afiliado">
+                        <span class="ad-tag">Recomendado</span>
+                        <div id="ad-affiliate-container" class="ad-container"><div class="ad-fallback">Publicidad</div></div>
+                    </section>
+                    <section class="ad-section" aria-label="Espacio publicitario">
+                        <span class="ad-tag">Publicidad</span>
+                        <div id="ad-client-container" class="ad-container"><div class="ad-fallback">Espacio disponible</div></div>
+                    </section>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- BOTTOM NAVIGATION -->
+        <nav class="bottom-nav" aria-label="Navegación principal">
+            <button class="bottom-tab active" data-screen="home" aria-current="page"><i class="fa-solid fa-house"></i><span>Inicio</span></button>
+            <button class="bottom-tab" data-screen="calculadora"><i class="fa-solid fa-calculator"></i><span>Conversor</span></button>
+            <button class="bottom-tab" data-screen="oro"><i class="fa-solid fa-coins"></i><span>Oro</span></button>
+            <button class="bottom-tab" data-screen="tendencias"><i class="fa-solid fa-arrow-trend-up"></i><span>Tendencias</span></button>
+            <button class="bottom-tab" id="shareTab"><i class="fa-solid fa-share-nodes"></i><span>Compartir</span></button>
+        </nav>
+    </div>
+
+    <!-- ============ HISTORIAL (hoja inferior) ============ -->
+    <div class="modal" id="historySheet" role="dialog" aria-modal="true" aria-labelledby="historyTitle" hidden>
+        <div class="modal-scrim" data-close></div>
+        <div class="modal-panel" tabindex="-1">
+            <div class="modal-head">
+                <h2 id="historyTitle">Historial de conversiones</h2>
+                <button class="icon-btn" data-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <ul class="history-list full" id="history-full-list"></ul>
+            <button class="btn-tonal danger" id="btn-clear-history"><i class="fa-solid fa-trash-can"></i> Limpiar historial</button>
+        </div>
+    </div>
+
+    <!-- ============ ACERCA DE ============ -->
+    <div class="modal dialog" id="aboutDialog" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" hidden>
+        <div class="modal-scrim" data-close></div>
+        <div class="modal-panel" tabindex="-1">
+            <div class="about-logo" aria-hidden="true">💰</div>
+            <h2 id="aboutTitle">MisMonedas</h2>
+            <p class="about-version">Versión 4.2.0</p>
+            <p>Aplicación para consultar y convertir tasas de Venezuela y Colombia en tiempo real.</p>
+            <ul class="about-list">
+                <li><i class="fa-solid fa-circle-check"></i> Tasas BCV oficiales (dólar y euro)</li>
+                <li><i class="fa-solid fa-circle-check"></i> Dólar paralelo y TRM Colombia</li>
+                <li><i class="fa-solid fa-circle-check"></i> Conversores, determinador y calculadora de oro</li>
+                <li><i class="fa-solid fa-circle-check"></i> Tendencias con datos reales e historial local</li>
+            </ul>
+            <p class="about-author"><strong>Autor:</strong> Jairo Cárdenas<br><a href="mailto:jairo.cardenas.dev@gmail.com">jairo.cardenas.dev@gmail.com</a></p>
+            <button class="btn-primary" data-close>Cerrar</button>
+        </div>
+    </div>
+
+    <!-- ============ BIENVENIDA (1 vez al día) ============ -->
+    <div class="modal dialog" id="welcomeDialog" role="dialog" aria-modal="true" aria-labelledby="welcome-greeting" hidden>
+        <div class="modal-scrim" data-close></div>
+        <div class="modal-panel" tabindex="-1">
+            <h2 id="welcome-greeting">👋 ¡Hola!</h2>
+            <p class="screen-subtitle">Resumen del mercado hoy</p>
+            <div class="mini-grid">
+                <div class="mini-rate"><span class="mini-label">BCV</span><span class="mini-value" id="welcome-bcv">--</span><span class="stat-variation stable" id="welcome-bcv-var"></span></div>
+                <div class="mini-rate"><span class="mini-label">Paralelo</span><span class="mini-value" id="welcome-paralelo">--</span><span class="stat-variation stable" id="welcome-paralelo-var"></span></div>
+                <div class="mini-rate"><span class="mini-label">Euro</span><span class="mini-value" id="welcome-euro">--</span><span class="stat-variation stable" id="welcome-euro-var"></span></div>
+                <div class="mini-rate"><span class="mini-label">TRM</span><span class="mini-value" id="welcome-trm">--</span><span class="stat-variation stable" id="welcome-trm-var"></span></div>
+            </div>
+            <div class="insight-card neutral" id="welcome-insight">
+                <i class="fa-solid fa-scale-balanced" id="welcome-insight-icon" aria-hidden="true"></i>
+                <div><div class="insight-title">Insight del día</div><p id="welcome-insight-text">Cargando...</p></div>
+            </div>
+            <div class="tip-card"><i class="fa-regular fa-lightbulb" aria-hidden="true"></i><p id="welcome-tip-text">Tip del día</p></div>
+            <p class="last-update" id="welcome-last-update">Actualizado: --</p>
+            <button class="btn-primary" data-close>¡Entendido!</button>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

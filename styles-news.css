@@ -1,0 +1,99 @@
+/* ============================================================
+   MisMonedas v4.2.0 — Noticias y publicidad (Material 3)
+   Reemplaza la versión indigo (variables --news-*, --primary-rgb).
+   Todo usa los tokens definidos en styles.css.
+   ============================================================ */
+
+/* ---------- NOTICIAS ---------- */
+.news-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 4px; }
+
+.news-card {
+    background: var(--surface-container-high);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.news-card > a { display: flex; flex-direction: column; height: 100%; color: inherit; text-decoration: none; }
+.news-card > a:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; border-radius: var(--radius-lg); }
+
+.news-image { width: 100%; height: 160px; object-fit: cover; background: var(--surface-container-highest); display: block; }
+.news-content { padding: 16px; display: flex; flex-direction: column; flex-grow: 1; }
+
+.news-category {
+    display: inline-block; width: fit-content; margin-bottom: 8px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 4px 10px; border-radius: 999px;
+}
+.news-category.cat-cripto { background: rgba(240, 185, 11, 0.18); color: #7a5b00; }
+.news-category.cat-regional { background: var(--variation-down-bg); color: var(--variation-down-fg); }
+[data-theme="dark"] .news-category.cat-cripto { color: #f0c640; }
+
+.news-title {
+    font-size: 16px; font-weight: 700; line-height: 1.4; margin: 0 0 8px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.news-description {
+    font-size: 14px; line-height: 1.5; color: var(--on-surface-variant); margin: 0 0 14px; flex-grow: 1;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.news-meta {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--on-surface-variant);
+    border-top: 1px solid var(--surface-container-highest); padding-top: 12px; margin-top: auto;
+}
+.news-meta span { display: flex; align-items: center; gap: 6px; }
+
+/* Estados */
+.news-loading { grid-column: 1 / -1; display: flex; justify-content: center; gap: 8px; padding: 32px; }
+.news-loading span {
+    width: 12px; height: 12px; border-radius: 50%; background: var(--primary); opacity: 0.35;
+    animation: news-bounce 1.4s infinite ease-in-out both;
+}
+.news-loading span:nth-child(1) { animation-delay: -0.32s; }
+.news-loading span:nth-child(2) { animation-delay: -0.16s; }
+@keyframes news-bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+.news-empty { grid-column: 1 / -1; text-align: center; padding: 40px 16px; color: var(--on-surface-variant); }
+.news-empty i { font-size: 36px; margin-bottom: 12px; opacity: 0.5; display: block; }
+
+/* ---------- PUBLICIDAD (CLS 0: alto mínimo reservado) ---------- */
+.ad-section { margin-top: 20px; }
+.ad-tag {
+    display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--on-surface-variant); margin: 0 0 6px 4px;
+}
+.ad-container { min-height: 100px; border-radius: var(--radius-lg); overflow: hidden; }
+.ad-fallback {
+    min-height: 100px; display: grid; place-items: center;
+    background: var(--surface-container-high); color: var(--on-surface-variant); font-size: 13px;
+    border-radius: var(--radius-lg);
+}
+
+/* Banner de afiliado (Binance) y banner de cliente comparten estructura */
+.binance-banner-link, .client-banner-link { display: block; color: inherit; text-decoration: none; border-radius: var(--radius-lg); }
+.binance-banner-link:focus-visible, .client-banner-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.binance-banner, .client-banner {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px; min-height: 100px;
+    padding: 16px; border-left: 4px solid #F0B90B; border-radius: var(--radius-lg);
+    background: var(--surface-container-high);
+}
+.binance-icon, .client-icon {
+    flex: 0 0 48px; width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+}
+.binance-content, .client-content { flex: 1 1 140px; min-width: 0; }
+.binance-title, .client-title { margin: 0 0 4px; font-size: 16px; font-weight: 700; line-height: 1.3; }
+.binance-text, .client-text { margin: 0; font-size: 13px; line-height: 1.4; color: var(--on-surface-variant); }
+
+.binance-cta, .client-cta {
+    flex: 0 0 auto; display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 18px; border-radius: 999px; font-weight: 700; font-size: 14px; white-space: nowrap;
+    transition: opacity 0.2s;
+}
+.binance-banner-link:hover .binance-cta, .client-banner-link:hover .client-cta { opacity: 0.9; }
+
+@media (max-width: 420px) {
+    .binance-cta, .client-cta { width: 100%; }
+}

@@ -1,0 +1,9 @@
+# Sistema Operativo y Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Entornos y registros locales
+*.log
+.env
